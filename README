@@ -1,8 +1,9 @@
-ws
-
-A python script to share a directory through HTTP.
+ws - a python script to share a directory through HTTP.
 
 By default it shares the current working directory.
+Users can browse through subdirectories to download files of their choosing or
+download entire directories as a zip file.
+Optionally the script can be ran using basic access authentication. 
 
 Options:
     -d <path to directory>
