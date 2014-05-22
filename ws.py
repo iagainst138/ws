@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
 import sys
-import glob, os
+import os
 import BaseHTTPServer
-import SimpleHTTPServer
-import SocketServer
 import shutil
 import urllib
 import zipfile
@@ -13,42 +11,48 @@ import optparse
 import getpass
 import base64
 from SocketServer import ThreadingMixIn
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from BaseHTTPServer import BaseHTTPRequestHandler
 
 credentials = () 
 
+
 def isdir(path):
-    path = os.path.join(base_dir, urllib.unquote(path))
+    path = os.path.join(base_dir, urllib.url2pathname(path))
     return os.path.isdir(path)
+
 
 def list_dir(path):
     r = ''
-    p = os.path.join(base_dir, urllib.unquote(path))
+    p = os.path.join(base_dir, urllib.url2pathname(path))
     if path.find('/') > -1:
         path = '/' + path
     for f in sorted(os.listdir(p)):
         fp = os.path.join(p, f)
         r += '<a href="' + path + '/' + f + '" >' + f + '</a>'
         if os.path.isdir(fp):
-             r += ' <a class="dir" href="' + path + '/' + f + '?d=1" >(download dir)</a></br>\n'
+            r += ' <a class="dir" href="' + path + '/' + f + '?d=1" >(download dir)</a></br>\n'
         else:
             r += '</br>\n'
     return r
 
+
 def exists(path):
-    path = os.path.join(base_dir, urllib.unquote(path))
+    path = os.path.join(base_dir, urllib.url2pathname(path))
     return os.path.exists(path)
+
 
 def gen_dict(args):
     d = {}
     for arg in args.split(','):
         if arg.find('=') > 0:
-            k,v = arg.split('=')
+            k, v = arg.split('=')
             d[k] = v
     return d
 
+
 class ThreadedHTTPServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
     """Handle requests in a separate thread."""
+
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -58,19 +62,20 @@ class Handler(BaseHTTPRequestHandler):
                 self.wfile.write('not authenticated\n')
                 return
         args = {}
-        self.path = self.path.lstrip('/')
-        if self.path.find('?') > -1:
-            self.path, args = self.path.split('?')
+        path = self.path.lstrip('/')
+        if path.find('?') > -1:
+            path, args = path.split('?')
             args = gen_dict(args)
-        if exists(self.path):
-            if isdir(self.path):
-                if args.has_key('d') and args['d'] == '1':
-                    file_path = os.path.join(base_dir, self.path)
+        if exists(path):
+            if isdir(path):
+                if 'd' in args and args['d'] == '1':
+                    file_path = os.path.join(base_dir, path)
                     filename = file_path.split('/')[-1] + '.zip'
-                    print 'download ' + str(self.client_address) + ': ' + file_path + ' as ' + filename
+                    print 'download ' + str(self.client_address) + ': ' + urllib.url2pathname(
+                        file_path) + ' as ' + filename
                     tmp_zip = tempfile.NamedTemporaryFile()
                     z = zipfile.ZipFile(tmp_zip, mode='w')
-                    for root,dirs,files in os.walk(file_path):
+                    for root, dirs, files in os.walk(urllib.url2pathname(file_path)):
                         for f in files:
                             z.write(os.path.join(root, f))
                     z.close()
@@ -96,15 +101,17 @@ class Handler(BaseHTTPRequestHandler):
                             font-size: 75%;
                         }
                         </style>"""
-                    data += '<b>directory listing for ' + os.path.join(base_dir, urllib.unquote(self.path)) + '</b><hr>'
-                    data += list_dir(self.path)
+                    data += '<b>directory listing for ' + os.path.join(base_dir,
+                                                                       urllib.url2pathname(path)) + '</b><hr>'
+                    data += list_dir(path)
                     data += '</body>\n</html>'
                     self.heads()
                     self.wfile.write(data)
             else:
-                self.path = urllib.unquote(self.path)
-                print 'download ' + str(self.client_address) + ': ' + self.path
-                file_path = os.path.join(base_dir, self.path)
+                path = urllib.url2pathname(path)
+                print 'Base dir', base_dir
+                print 'download ' + str(self.client_address) + ': ' + os.path.join(base_dir, path)
+                file_path = os.path.join(base_dir, path)
                 filename = file_path.split('/')[-1]
                 f = open(file_path, 'rb')
                 size = os.path.getsize(file_path)
@@ -115,8 +122,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 shutil.copyfileobj(f, self.wfile)
         else:
-            if self.path != 'favicon.ico': # ignore requests for a favicon
-                print '404:', self.path
+            if path != 'favicon.ico':  # ignore requests for a favicon
+                print '404:', path
                 self.heads(response=404)
                 self.wfile.write('<h1>404 Not Found</h1>\n')
 
@@ -127,7 +134,7 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()  
 
     def log_request(self, code=None, size=0):
-        pass # don't log all requests
+        pass  # don't log all requests
     
     def heads(self, response=200, mime='text/html'):
         self.send_response(response)
@@ -140,7 +147,7 @@ if __name__ == '__main__':
     o.add_option('-P', dest='port', default='8001')
     o.add_option('-u', dest='user', default=None)
     o.add_option('-p', dest='password', default=None)
-    options,args = o.parse_args()
+    options, args = o.parse_args()
     
     base_dir = options.directory
     if not os.path.exists(base_dir):
