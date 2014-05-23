@@ -15,3 +15,5 @@ Options:
         - password to use for basic HTTP authentication
     -P <port>
         - port to share on
+    -H <True>
+        - share hidden files
