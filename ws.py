@@ -27,6 +27,8 @@ def list_dir(path):
     if path.find('/') > -1:
         path = '/' + path
     for f in sorted(os.listdir(p)):
+        if f.startswith('.') and not options.hidden:
+            continue
         fp = os.path.join(p, f)
         r += '<a href="' + path + '/' + f + '" >' + f + '</a>'
         if os.path.isdir(fp):
@@ -77,7 +79,7 @@ class Handler(BaseHTTPRequestHandler):
                     z = zipfile.ZipFile(tmp_zip, mode='w')
                     for root, dirs, files in os.walk(urllib.url2pathname(file_path)):
                         for f in files:
-                            z.write(os.path.join(root, f))
+                            z.write(os.path.join(root, f), os.path.join(root[root.find(path):], f))
                     z.close()
                     self.send_response(200)
                     self.send_header('Content-type', 'application/octet-stream')
@@ -147,6 +149,7 @@ if __name__ == '__main__':
     o.add_option('-P', dest='port', default='8001')
     o.add_option('-u', dest='user', default=None)
     o.add_option('-p', dest='password', default=None)
+    o.add_option('-H', dest='hidden', default=None)
     options, args = o.parse_args()
     
     base_dir = options.directory
