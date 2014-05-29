@@ -79,7 +79,8 @@ class Handler(BaseHTTPRequestHandler):
                     z = zipfile.ZipFile(tmp_zip, mode='w')
                     for root, dirs, files in os.walk(urllib.url2pathname(file_path)):
                         for f in files:
-                            z.write(os.path.join(root, f), os.path.join(root[root.find(path):], f))
+                            z.write(os.path.join(root, f),
+                                    os.path.join(root[root.find(urllib.url2pathname(path)):], f))
                     z.close()
                     self.send_response(200)
                     self.send_header('Content-type', 'application/octet-stream')
