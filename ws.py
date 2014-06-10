@@ -82,7 +82,8 @@ class Handler(BaseHTTPRequestHandler):
                     self.end_headers()
                     shutil.copyfileobj(open(tmp_zip.name, 'rb'), self.wfile)
                 else:
-                    data = """<html>\n<head></head>\n<body>\n
+                    data = """<html>\n<head><meta name="viewport" content="width=device-width, minimumscale=1.0, maximum-scale=1.0" />\n
+                    </head>\n<body>\n
                         <style>
                         body {
                             margin: 0;
