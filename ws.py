@@ -117,8 +117,9 @@ class Handler(BaseHTTPRequestHandler):
                 print 'Base dir', base_dir
                 print 'download ' + str(self.client_address) + ': ' + os.path.join(base_dir, path)
                 file_path = os.path.join(base_dir, path)
-                mimetype = 'application/octet-stream'
-                mimetype = mimetypes.guess_type(file_path)
+                mimetype = mimetypes.guess_type(file_path)[0]
+                if not mimetype:
+                    mimetype = 'application/octet-stream'
                 filename = file_path.split('/')[-1]
                 f = open(file_path, 'rb')
                 size = os.path.getsize(file_path)
