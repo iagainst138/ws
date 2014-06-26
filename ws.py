@@ -10,6 +10,7 @@ import tempfile
 import optparse
 import getpass
 import base64
+import mimetypes
 from SocketServer import ThreadingMixIn
 from BaseHTTPServer import BaseHTTPRequestHandler
 
@@ -89,13 +90,14 @@ class Handler(BaseHTTPRequestHandler):
                     self.end_headers()
                     shutil.copyfileobj(open(tmp_zip.name, 'rb'), self.wfile)
                 else:
-                    data = """<html>\n<head></head>\n<body>\n
+                    data = """<html>\n<head><meta name="viewport" content="width=device-width, minimumscale=1.0, maximum-scale=1.0" />\n
+                    </head>\n<body>\n
                         <style>
                         body {
                             margin: 0;
                             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
                             font-size: 14px;
-                            line-height: 16px;
+                            line-height: 18px;
                             color: #333333;
                             background-color: #ffffff;
                             padding: 10px;
@@ -115,13 +117,16 @@ class Handler(BaseHTTPRequestHandler):
                 print 'Base dir', base_dir
                 print 'download ' + str(self.client_address) + ': ' + os.path.join(base_dir, path)
                 file_path = os.path.join(base_dir, path)
+                mimetype = 'application/octet-stream'
+                mimetype = mimetypes.guess_type(file_path)
                 filename = file_path.split('/')[-1]
                 f = open(file_path, 'rb')
                 size = os.path.getsize(file_path)
                 self.send_response(200)
-                self.send_header('Content-type', 'application/octet-stream')
-                self.send_header('Content-Disposition', 'attachment; filename="' + filename + '"')
-                self.send_header('Content-length', str(size))
+                self.send_header('Content-type', mimetype)
+                # these options force the file to be downloaded no matter what
+                #self.send_header('Content-Disposition', 'attachment; filename="' + filename + '"')
+                #self.send_header('Content-length', str(size))
                 self.end_headers()
                 shutil.copyfileobj(f, self.wfile)
         else:
@@ -158,8 +163,14 @@ if __name__ == '__main__':
         sys.exit(base_dir + ' does not exist')
     if options.user:
         if not options.password:
-            options.password = getpass.getpass('password: ')
+            p1 = getpass.getpass('password: ')
+            p2 = getpass.getpass('confirm password: ')
+            if p1 == p2:
+                options.password = p1
+            else:
+                sys.exit('Passwords do not match.') 
         credentials = (options.user, base64.b64encode(options.user + ':' + options.password))
     server = ThreadedHTTPServer(('', int(options.port)), Handler)
+    server.xxx = False
     print 'sharing ' + options.directory + ' on port ' + options.port
     server.serve_forever()
