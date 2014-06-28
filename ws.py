@@ -66,14 +66,27 @@ class Handler(BaseHTTPRequestHandler):
         if exists(self.path):
             if isdir(self.path):
                 if args.has_key('d') and args['d'] == '1':
-                    file_path = os.path.join(base_dir, self.path)
+                    path = urllib.url2pathname(self.path)
+                    file_path = os.path.join(base_dir, path)
                     filename = file_path.split('/')[-1] + '.zip'
-                    print 'download ' + str(self.client_address) + ': ' + file_path + ' as ' + filename
+                    
+                    print 'download - ' + str(self.client_address) + ': ' + file_path + ' as ' + filename
+
                     tmp_zip = tempfile.NamedTemporaryFile()
                     z = zipfile.ZipFile(tmp_zip, mode='w')
+
+                    if path.find(os.sep) > -1:
+                        zip_base = path.split(os.sep)[-1]
+                    else:
+                        zip_base = path
+
                     for root,dirs,files in os.walk(file_path):
                         for f in files:
-                            z.write(os.path.join(root, f))
+                            zip_file = os.path.join(root[root.find(urllib.url2pathname(path)):], f)
+                            if zip_base != path:
+                                zip_file = zip_file[zip_file.find(zip_base, 1):]
+                            z.write(os.path.join(root, f), zip_file)
+
                     z.close()
                     self.send_response(200)
                     self.send_header('Content-type', 'application/octet-stream')
