@@ -166,7 +166,7 @@ if __name__ == '__main__':
     o.add_option('-P', dest='port', default='8001')
     o.add_option('-u', dest='user', default=None)
     o.add_option('-p', dest='password', default=None)
-    o.add_option('-H', dest='hidden', default=None)
+    o.add_option('-H', dest='hidden', default=False, action='store_true')
     options, args = o.parse_args()
     
     base_dir = options.directory
