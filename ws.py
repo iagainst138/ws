@@ -108,7 +108,7 @@ class Handler(BaseHTTPRequestHandler):
                             margin: 0;
                             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
                             font-size: 14px;
-                            line-height: 18px;
+                            line-height: 20px;
                             color: #333333;
                             background-color: #ffffff;
                             padding: 10px;
@@ -141,10 +141,9 @@ class Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 shutil.copyfileobj(f, self.wfile)
         else:
-            if path != 'favicon.ico':  # ignore requests for a favicon
-                print '404:', path
-                self.heads(response=404)
-                self.wfile.write('<h1>404 Not Found</h1>\n')
+            print '404:', self.path
+            self.heads(response=404)
+            self.wfile.write('<div style="font-family:Helvetica;"><h1>404 Not Found</h1></div>\n')
 
     def do_AUTHHEAD(self):                  
         self.send_response(401)                             
@@ -182,6 +181,5 @@ if __name__ == '__main__':
                 sys.exit('Passwords do not match.') 
         credentials = (options.user, base64.b64encode(options.user + ':' + options.password))
     server = ThreadedHTTPServer(('', int(options.port)), Handler)
-    server.xxx = False
     print 'sharing ' + options.directory + ' on port ' + options.port
     server.serve_forever()
